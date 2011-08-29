@@ -1,6 +1,6 @@
 User Contact Forms Module
 =============================
-The User Contact Forms module allows site developers to enable a contact form for certain users by role. This form allows anyone accessing the site to user the form, even anonymous users.
+The User Contact Forms module allows site developers to enable a contact form for certain users by role. This form allows anyone accessing the site to use the form, even anonymous users.
 
 Installation & Setup:
 -----------------------------

@@ -92,7 +92,7 @@ function contact_user_mail_page($form_state, $account) {
   global $user;
   
   $contact_user_form_information = variable_get('contact_user_form_information', t('You can leave a send a message to %username using the contact form below.'));
-  $contact_user_form_information = str_replace('%username', $account->name, $contact_user_form_information)
+  $contact_user_form_information = str_replace('%username', $account->name, $contact_user_form_information);
   $form['#token'] = $user->uid ? $user->name . $user->mail : '';
   $form['contact_information'] = array('#value' => filter_xss_admin($contact_user_form_information));
   $form['name'] = array('#type' => 'textfield',
