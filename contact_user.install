@@ -1,0 +1,8 @@
+<?php
+
+function contact_user_uninstall() {
+  variable_del('contact_user_confirmation_message');
+  variable_del('contact_user_form_information');
+  variable_del('contact_user_hourly_threshold');
+  variable_del('contact_user_subject_prefix');
+}
