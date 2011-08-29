@@ -67,7 +67,22 @@ function contact_user_menu() {
     'access callback' => '_contact_user_access',
     'access arguments' => array(1),
   );
+  
+  $items['user/%user/contact'] = array(
+    'title' => 'Contact',
+    'page callback' => 'contact_user_tab_goto',
+    'page arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'access callback' => '_contact_user_access',
+    'access arguments' => array(1),
+    
+  );
+  
   return $items;
+}
+
+function contact_user_tab_goto($account) {
+  drupal_goto('contact/' . $account->uid);
 }
 
 /**
