@@ -4,7 +4,7 @@ function contact_user_admin_settings() {
   $form['contact_user_form_information'] = array(
     '#type' => 'textarea',
     '#title' => t('Additional information'),
-    '#default_value' => variable_get('contact_user_form_information', t('You can leave a send a message to %username using the contact form below.', array('%username'=>$account->name))),
+    '#default_value' => variable_get('contact_user_form_information', t('You can leave a send a message to %username using the contact form below.')),
     '#description' => t('Information to show on the user contact page. Us can use the variable <em>%username</em> and the username of the person being contacted will be substituted.'),
   );
   $form['contact_user_hourly_threshold'] = array(
