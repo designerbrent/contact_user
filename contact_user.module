@@ -22,7 +22,7 @@ function contact_user_perm() {
  *   TRUE if the current user has access to the requested user's contact form,
  *   or FALSE otherwise.
  */
-function _contact_user_access($account){
+function _contact_user_access($account) {
   global $user;
 
   // User administrators should always have access to personal contact forms.
@@ -58,7 +58,7 @@ function contact_user_menu() {
     'file' => 'contact_user.admin.inc',
     'weight' => 10,
   );
-  
+
   $items['contact/%user'] = array(
     'title' => 'Contact',
     'page callback' => 'contact_user_form',
@@ -67,7 +67,7 @@ function contact_user_menu() {
     'access callback' => '_contact_user_access',
     'access arguments' => array(1),
   );
-  
+
   $items['user/%user/contact'] = array(
     'title' => 'Contact',
     'page callback' => 'contact_user_tab_goto',
@@ -75,9 +75,8 @@ function contact_user_menu() {
     'type' => MENU_LOCAL_TASK,
     'access callback' => '_contact_user_access',
     'access arguments' => array(1),
-    
+
   );
-  
   return $items;
 }
 
@@ -95,7 +94,7 @@ function contact_user_form($account) {
     $output = t('You cannot contact more than %number users per hour. Please try again later.', array('%number' => variable_get('contact_hourly_threshold', 3)));
   }
   else {
-    drupal_set_title('Contact ' . check_plain($account->name));
+    drupal_set_title(check_plain('Contact ' . $account->name));
     $output = drupal_get_form('contact_user_mail_page', $account);
   }
 
@@ -105,7 +104,7 @@ function contact_user_form($account) {
 
 function contact_user_mail_page($form_state, $account) {
   global $user;
-  
+
   $contact_user_form_information = variable_get('contact_user_form_information', t('You can send a message to %username using the contact form below.'));
   $contact_user_form_information = str_replace('%username', $account->name, $contact_user_form_information);
   $form['#token'] = $user->uid ? $user->name . $user->mail : '';
@@ -146,7 +145,6 @@ function contact_user_mail_page($form_state, $account) {
   );
 
   $form['#account'] = $account;
-  
 
   return $form;
 }
@@ -171,8 +169,6 @@ function contact_user_mail_page_submit($form, &$form_state) {
   $values['contact']['recipients'] = $form['#account']->mail;
   $values['contact']['category'] = variable_get('contact_user_subject_prefix', t('User contact'));
 
-  dpm($form['#account']);
-  
   // E-mail address of the sender: as the form field is a text field,
   // all instances of \r and \n have been automatically stripped from it.
   $from = $values['mail'];
@@ -186,7 +182,7 @@ function contact_user_mail_page_submit($form, &$form_state) {
   }
 
   flood_register_event('contact_user');
-  watchdog('mail', '%from sent an e-mail to %username.', array('%from' => $from, '%username'=>$form['#account']->name));
+  watchdog('mail', '%from sent an e-mail to %username.', array('%from' => $from, '%username' => $form['#account']->name));
   drupal_set_message(variable_get('contact_user_confirmation_message', t('Your message has been sent.')));
 
   // Jump to home page rather than back to contact page to avoid

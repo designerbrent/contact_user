@@ -1,4 +1,8 @@
-<?php 
+<?php
+/**
+ * @file
+ * The admin pages for the User Contact Forms module.
+ */
 
 function contact_user_admin_settings() {
   $form['contact_user_form_information'] = array(
@@ -13,7 +17,7 @@ function contact_user_admin_settings() {
     '#options' => drupal_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50)),
     '#default_value' => variable_get('contact_user_hourly_threshold', 3),
     '#description' => t('The maximum number of contact user form submissions a user can perform per hour.'),
-   );
+  );
   $form['contact_user_subject_prefix'] = array(
     '#type' => 'textfield',
     '#title' => t('Subject Prefix'),
@@ -28,6 +32,5 @@ function contact_user_admin_settings() {
     '#default_value' => variable_get('contact_user_confirmation_message', t('Your message has been sent.')),
     '#description' => t('Enter the confirmation message displayed when the form is submitted.'),
   );
-  
   return system_settings_form($form);
 }
