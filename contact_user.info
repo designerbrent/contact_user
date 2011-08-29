@@ -1,0 +1,5 @@
+; $Id: $
+name = User Contact Forms
+description = Creates individual contact pages for users.
+dependencies[] = contact
+core = 6.x

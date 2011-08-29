@@ -1,0 +1,179 @@
+<?php
+
+/**
+ * Implements hook_perm().
+ */
+function contact_user_perm() {
+  $perms = array();
+
+  foreach (user_roles(TRUE) as $key => $value) {
+    # Create a permission for each role.
+    $perms[] = 'contact ' . $value . ' users';
+    }
+  return $perms;
+}
+
+/**
+ * Menu access callback for a user's personal contact form.
+ *
+ * @param $account
+ *   A user account object.
+ * @return
+ *   TRUE if the current user has access to the requested user's contact form,
+ *   or FALSE otherwise.
+ */
+function _contact_user_access($account){
+  global $user;
+
+  // User administrators should always have access to personal contact forms.
+  if (user_access('administer users')) {
+    return TRUE;
+  }
+
+  // Users may not contact themselves.
+  if ($user->uid == $account->uid) {
+    return FALSE;
+  }
+
+  // Check for general permissions.
+  foreach ($account->roles as $value) {
+    if (user_access('contact ' . $value . ' users')) {
+      return TRUE;
+    }
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function contact_user_menu() {
+  $items = array();
+
+  $items['admin/build/contact/contact_user'] = array(
+    'title' => 'User contact settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('contact_user_admin_settings'),
+    'access arguments' => array('administer site-wide contact form'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'contact_user.admin.inc',
+    'weight' => 10,
+  );
+  
+  $items['contact/%user'] = array(
+    'title' => 'Contact',
+    'page callback' => 'contact_user_form',
+    'page arguments' => array(1),
+    'type' => MENU_CALLBACK,
+    'access callback' => '_contact_user_access',
+    'access arguments' => array(1),
+  );
+  return $items;
+}
+
+/**
+ * Personal contact page.
+ */
+function contact_user_form($account) {
+  global $user;
+
+  if (!flood_is_allowed('contact_user', variable_get('contact_user_hourly_threshold', 3))) {
+    $output = t('You cannot contact more than %number users per hour. Please try again later.', array('%number' => variable_get('contact_hourly_threshold', 3)));
+  }
+  else {
+    drupal_set_title('Contact ' . check_plain($account->name));
+    $output = drupal_get_form('contact_user_mail_page', $account);
+  }
+
+  return $output;
+}
+
+
+function contact_user_mail_page($form_state, $account) {
+  global $user;
+
+  $form['#token'] = $user->uid ? $user->name . $user->mail : '';
+  $form['contact_information'] = array('#value' => filter_xss_admin(variable_get('contact_user_form_information', t('You can leave a send a message to %username using the contact form below.', array('%username'=>$account->name)))));
+  $form['name'] = array('#type' => 'textfield',
+    '#title' => t('Your name'),
+    '#maxlength' => 255,
+    '#default_value' => $user->uid ? $user->name : '',
+    '#required' => TRUE,
+  );
+  $form['mail'] = array('#type' => 'textfield',
+    '#title' => t('Your e-mail address'),
+    '#maxlength' => 255,
+    '#default_value' => $user->uid ? $user->mail : '',
+    '#required' => TRUE,
+  );
+  $form['subject'] = array('#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#maxlength' => 255,
+    '#required' => TRUE,
+  );
+  $form['message'] = array('#type' => 'textarea',
+    '#title' => t('Message'),
+    '#required' => TRUE,
+  );
+  // We do not allow anonymous users to send themselves a copy
+  // because it can be abused to spam people.
+  if ($user->uid) {
+    $form['copy'] = array('#type' => 'checkbox',
+      '#title' => t('Send yourself a copy.'),
+    );
+  }
+  else {
+    $form['copy'] = array('#type' => 'value', '#value' => FALSE);
+  }
+  $form['submit'] = array('#type' => 'submit',
+    '#value' => t('Send e-mail'),
+  );
+
+  $form['#account'] = $account;
+  
+
+  return $form;
+}
+
+/**
+ * Validate the user contact page form submission.
+ */
+function contact_user_mail_page_validate($form, &$form_state) {
+  if (!valid_email_address($form_state['values']['mail'])) {
+    form_set_error('mail', t('You must enter a valid e-mail address.'));
+  }
+}
+
+/**
+ * Process the user contact page form submission.
+ */
+function contact_user_mail_page_submit($form, &$form_state) {
+  global $language;
+
+  $values = $form_state['values'];
+
+  $values['contact']['recipients'] = $form['#account']->mail;
+  $values['contact']['category'] = variable_get('contact_user_subject_prefix', t('User contact'));
+
+  dpm($form['#account']);
+  
+  // E-mail address of the sender: as the form field is a text field,
+  // all instances of \r and \n have been automatically stripped from it.
+  $from = $values['mail'];
+
+  // Send the e-mail to the recipients using the site default language.
+  drupal_mail('contact', 'page_mail', $values['contact']['recipients'], language_default(), $values, $from);
+
+  // If the user requests it, send a copy using the current language.
+  if ($values['copy']) {
+    drupal_mail('contact', 'page_copy', $from, $language, $values, $from);
+  }
+
+  flood_register_event('contact_user');
+  watchdog('mail', '%from sent an e-mail to %username.', array('%from' => $from, '%username'=>$form['#account']->name));
+  drupal_set_message(variable_get('contact_user_confirmation_message', t('Your message has been sent.')));
+
+  // Jump to home page rather than back to contact page to avoid
+  // contradictory messages if flood control has been activated.
+  $form_state['redirect'] = '';
+}
+
